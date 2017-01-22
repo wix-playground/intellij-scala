@@ -87,6 +87,9 @@ class ScalaMoveClassTest extends ScalaLightPlatformCodeInsightTestCaseAdapter {
     doTest("bothJavaAndScala", Array("org.A", "org.J"), "com")
   }
 
+  def testWithRelativeImport_SCL11280() {
+    doTest("withRelativeImport", Array("playground.A"), "playground2")
+  }
 
 //  wait for fix SCL-6316
 //  def testWithoutCompanion() {
@@ -94,7 +97,8 @@ class ScalaMoveClassTest extends ScalaLightPlatformCodeInsightTestCaseAdapter {
 //  }
 
 
-
+  // TODO add docs. Interim notes:
+  // 1. The target package name is expected to exist in the testdata (otherwise you get NPE)
   def doTest(testName: String, classNames: Array[String], newPackageName: String, mode: Kinds.Value = Kinds.all, moveCompanion: Boolean = true) {
     def findAndRefreshVFile(path: String) = {
       val vFile = LocalFileSystem.getInstance.findFileByPath(path.replace(File.separatorChar, '/'))
@@ -135,6 +139,7 @@ class ScalaMoveClassTest extends ScalaLightPlatformCodeInsightTestCaseAdapter {
       }
     }
     val aPackage: PsiPackage = JavaPsiFacade.getInstance(getProjectAdapter).findPackage(newPackageName)
+    assert(aPackage != null, s"A directory must pre-exist for target package $newPackageName")
     val dirs: Array[PsiDirectory] = aPackage.getDirectories(GlobalSearchScope.moduleScope(getModuleAdapter))
     assert(dirs.length == 1)
     ScalaFileImpl.performMoveRefactoring {
