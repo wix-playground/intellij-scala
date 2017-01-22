@@ -99,6 +99,8 @@ class ScalaMoveClassTest extends ScalaLightPlatformCodeInsightTestCaseAdapter {
 
   // TODO add docs. Interim notes:
   // 1. The target package name is expected to exist in the testdata (otherwise you get NPE)
+  // 2. This test seems to mix too many implementation details. Perhaps refactor into separate driver?
+  // 3. As a result, it's hard to trust that this is representative of what IDEA actually DOES "in production"
   def doTest(testName: String, classNames: Array[String], newPackageName: String, mode: Kinds.Value = Kinds.all, moveCompanion: Boolean = true) {
     def findAndRefreshVFile(path: String) = {
       val vFile = LocalFileSystem.getInstance.findFileByPath(path.replace(File.separatorChar, '/'))
