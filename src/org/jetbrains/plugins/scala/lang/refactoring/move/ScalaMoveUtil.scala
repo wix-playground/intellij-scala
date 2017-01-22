@@ -113,6 +113,7 @@ object ScalaMoveUtil {
       case file: ScalaFile if !alreadyMoved =>
         applyWithCompanionModule(aClass, withCompanion) { clazz =>
           val range = clazz.getTextRange
+          // FIXME SCL-11280 culprit likely here, results seem different on various runs
           val associations = PROCESSOR.collectTransferableData(file, null,
             Array[Int](range.getStartOffset), Array[Int](range.getEndOffset))
           clazz.putCopyableUserData(ASSOCIATIONS_KEY, if (associations.isEmpty) null else associations.get(0))
