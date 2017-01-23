@@ -6,7 +6,7 @@ import java.util
 
 import com.intellij.openapi.vfs.impl.VirtualFilePointerManagerImpl
 import com.intellij.openapi.vfs.pointers.VirtualFilePointerManager
-import com.intellij.openapi.vfs.{LocalFileSystem, VfsUtil, VirtualFile}
+import com.intellij.openapi.vfs.{LocalFileSystem, VfsUtil, VirtualFile, VirtualFileFilter}
 import com.intellij.psi._
 import com.intellij.psi.impl.source.PostprocessReformattingAspect
 import com.intellij.psi.search.GlobalSearchScope
@@ -127,7 +127,7 @@ class ScalaMoveClassTest extends ScalaLightPlatformCodeInsightTestCaseAdapter {
     val rootDir2: VirtualFile = findAndRefreshVFile(rootAfter)
     VirtualFilePointerManager.getInstance.asInstanceOf[VirtualFilePointerManagerImpl].storePointers()
     getProjectAdapter.getComponent(classOf[PostprocessReformattingAspect]).doPostponedFormatting()
-    PlatformTestUtil.assertDirectoriesEqual(rootDir2, rootDir)
+    PlatformTestUtil.assertDirectoriesEqual(rootDir2, rootDir, Ignores)
   }
 
   private def performAction(classNames: Array[String], newPackageName: String, mode: Kinds.Value) {
@@ -154,5 +154,10 @@ class ScalaMoveClassTest extends ScalaLightPlatformCodeInsightTestCaseAdapter {
   object Kinds extends Enumeration {
     type Kinds = Value
     val onlyObjects, onlyClasses, all = Value
+  }
+
+  object Ignores extends VirtualFileFilter {
+    override def accept(virtualFile: VirtualFile): Boolean =
+      virtualFile.getName != ".gitignore"
   }
 }
