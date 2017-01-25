@@ -1,13 +1,14 @@
 package org.jetbrains.plugins.scala
 package lang.refactoring.move
 
+import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.util.Key
 import com.intellij.psi.javadoc.PsiDocComment
 import com.intellij.psi.util.PsiTreeUtil
 import com.intellij.psi.{PsiClass, PsiDirectory, PsiElement, PsiFile}
 import org.jetbrains.annotations.NotNull
 import org.jetbrains.plugins.scala.actions.ScalaFileTemplateUtil
-import org.jetbrains.plugins.scala.conversion.copy.{Associations, ScalaCopyPastePostProcessor}
+import org.jetbrains.plugins.scala.conversion.copy.{Association, Associations, ScalaCopyPastePostProcessor}
 import org.jetbrains.plugins.scala.lang.psi.api.toplevel.typedef.{ScClass, ScObject, ScTrait, ScTypeDefinition}
 import org.jetbrains.plugins.scala.lang.psi.api.{ScPackage, ScalaFile}
 import org.jetbrains.plugins.scala.lang.refactoring.util.{ScalaDirectoryService, ScalaNamesUtil}
@@ -113,10 +114,18 @@ object ScalaMoveUtil {
       case file: ScalaFile if !alreadyMoved =>
         applyWithCompanionModule(aClass, withCompanion) { clazz =>
           val range = clazz.getTextRange
-          // FIXME SCL-11280 culprit likely here, results seem different on various runs
-          val associations = PROCESSOR.collectTransferableData(file, null,
-            Array[Int](range.getStartOffset), Array[Int](range.getEndOffset))
-          clazz.putCopyableUserData(ASSOCIATIONS_KEY, if (associations.isEmpty) null else associations.get(0))
+
+          val associations = scala.collection.mutable.ListBuffer.empty[Association]
+          val completed =
+            ProgressManager.getInstance().runProcessWithProgressSynchronously(
+              new Runnable { override def run(): Unit = PROCESSOR.collectAssociations(file, range, associations) },
+              "Analyzing code for move refactoring", // TODO l10n/i18n?
+              true,
+              file.getProject
+            )
+
+          // TODO propagate cancellation?
+          clazz.putCopyableUserData(ASSOCIATIONS_KEY, if (completed) Associations(associations) else null)
         }
       case _ =>
     }
